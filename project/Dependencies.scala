@@ -14,6 +14,9 @@ object Dependencies {
   val circeVersion         = "0.13.0"
   val tapirVersion         = "0.17.9"
 
+  val scalaLoggingVersion = "3.9.2"
+  val logbackVersion      = "1.2.3"
+
   val scalatestVersion  = "3.2.3"
   val scalacheckVersion = "1.15.2"
 
@@ -34,6 +37,9 @@ object Dependencies {
   val tapirAkkaHttpServer =
     ("com.softwaremill.sttp.tapir" %% "tapir-akka-http-server" % tapirVersion).exclude("com.typesafe.akka", "akka-stream_2.12")
 
+  val scalaLogging = "com.typesafe.scala-logging" %% "scala-logging"  % scalaLoggingVersion
+  val logback      = "ch.qos.logback"             % "logback-classic" % logbackVersion
+
   val scalatest  = "org.scalatest"  %% "scalatest"  % scalatestVersion  % Test
   val scalacheck = "org.scalacheck" %% "scalacheck" % scalacheckVersion % Test
 
@@ -51,7 +57,9 @@ object Dependencies {
       tapirCore,
       tapirDocs,
       tapirJsonCirce,
-      tapirAkkaHttpServer
+      tapirAkkaHttpServer,
+      scalaLogging,
+      logback
     )
 
   val testDependencies = Seq(scalatest, scalacheck)

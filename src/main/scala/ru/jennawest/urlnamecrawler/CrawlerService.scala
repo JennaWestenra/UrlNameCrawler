@@ -2,10 +2,13 @@ package ru.jennawest.urlnamecrawler
 
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
-import akka.http.scaladsl.model.{HttpRequest, HttpResponse, Uri}
+import akka.http.scaladsl.model._
+import akka.http.scaladsl.model._
+import HttpMethods._
 import akka.stream.Materializer
 import akka.util.ByteString
 import org.jsoup.Jsoup
+import com.typesafe.scalalogging.Logger
 import ru.jennawest.urlnamecrawler.CrawlerDTO._
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -17,7 +20,9 @@ trait CrawlerService {
 
 }
 
-class CrawlerServiceImpl(defaultProtocol: String) extends CrawlerService {
+class CrawlerServiceImpl(defaultProtocol: String, userAgent: String) extends CrawlerService {
+
+  private val log = Logger(getClass)
 
   override def crawlNames(urls: Seq[String])(implicit as: ActorSystem, ec: ExecutionContext): Future[FullResponse] = {
     val aggregatedUrls = getMainPagesUrls(urls)
@@ -61,7 +66,9 @@ class CrawlerServiceImpl(defaultProtocol: String) extends CrawlerService {
     }
 
   def requestContent(uri: Uri)(implicit as: ActorSystem, ec: ExecutionContext): Future[String] =
-    Http().singleRequest(HttpRequest(uri = uri)).flatMap { resp =>
+    Http().singleRequest(HttpRequest(uri = uri, headers = Seq(headers.`User-Agent`(userAgent)))).flatMap { resp =>
+      log.debug("For url {} got response status {}", uri, resp.status)
+      log.debug("headers: {}", resp.headers)
       if (resp.status.isSuccess()) {
         getContentString(resp)
       } else {
@@ -101,6 +108,7 @@ class CrawlerServiceImpl(defaultProtocol: String) extends CrawlerService {
     urls.foldLeft(AggregatedUrls.empty) { (acc, elem) =>
       getMainPageUrl(elem) match {                   // собираем урлы главных страниц сайтов;
         case Success(mainPageUrl) =>                 // возможна ситуация, когда в запросе есть урлы нескольких страниц одного и того же сайта
+          log.debug("Got main page url {} for url: {}", mainPageUrl, elem)
           val mapValue = acc.urlsWithMainPage        // поэтому агрегируем их
             .get(mainPageUrl)
             .map(_ :+ elem)
@@ -108,7 +116,8 @@ class CrawlerServiceImpl(defaultProtocol: String) extends CrawlerService {
 
           acc.copy(urlsWithMainPage = acc.urlsWithMainPage + (mainPageUrl -> mapValue))
 
-        case Failure(_) =>
+        case Failure(ex) =>
+          log.debug("Cannot get main page for url {}; error: {}", elem, ex.getMessage)
           acc.copy(failedUrls = acc.failedUrls :+ elem)  // отдельно сохраняем список урлов,
                                                          // для которых не получилось добыть урл главной страницы
       }

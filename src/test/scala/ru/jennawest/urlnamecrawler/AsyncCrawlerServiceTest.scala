@@ -13,7 +13,7 @@ class AsyncCrawlerServiceTest extends AsyncWordSpec with Matchers with BeforeAnd
   implicit private val as: ActorSystem = ActorSystem("name-crawler-service")
   import as.dispatcher
 
-  val service = new CrawlerServiceImpl("https")
+  val service = new CrawlerServiceImpl("https", "PostmanRuntime/7.26.3")
 
   "Crawler service" must {
 

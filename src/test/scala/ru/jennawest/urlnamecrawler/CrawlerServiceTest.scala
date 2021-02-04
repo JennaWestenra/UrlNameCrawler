@@ -12,23 +12,23 @@ class CrawlerServiceTest extends AnyWordSpec with Matchers with BeforeAndAfterAl
   import as.dispatcher
 
   val title = "I am a site title!"
-  val service = new CrawlerServiceImpl("https")
+  val service = new CrawlerServiceImpl("https", "PostmanRuntime/7.26.3")
 
   "Crawler service" must {
 
     "return valid main page for https://vk.com/feed" in {
       val uri = service.getMainPageUrl("https://vk.com/feed")
-      uri.success.value shouldBe (Uri.from(scheme = "https", host = "vk.com"))
+      uri.success.value shouldBe Uri.from(scheme = "https", host = "vk.com")
     }
 
     "return valid main page for vk.com/feed" in {
       val uri = service.getMainPageUrl("vk.com/feed")
-      uri.success.value shouldBe (Uri.from(scheme = "https", host = "vk.com"))
+      uri.success.value shouldBe Uri.from(scheme = "https", host = "vk.com")
     }
 
     "return valid main page for https://vk.com" in {
       val uri = service.getMainPageUrl("https://vk.com")
-      uri.success.value shouldBe (Uri.from(scheme = "https", host = "vk.com"))
+      uri.success.value shouldBe Uri.from(scheme = "https", host = "vk.com")
     }
 
     "return valid main page for vk.com" in {

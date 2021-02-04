@@ -6,7 +6,8 @@ import pureconfig.generic.auto._
 case class AppConfig(
   host: String,
   port: Int,
-  defaultProtocol: String
+  defaultProtocol: String,
+  userAgent: String
 )
 
 object AppConfig {
