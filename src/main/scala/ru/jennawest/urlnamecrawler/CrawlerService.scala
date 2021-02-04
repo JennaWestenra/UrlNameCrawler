@@ -31,15 +31,58 @@ class CrawlerServiceImpl(defaultProtocol: String) extends CrawlerService {
     }
   }
 
-  def getMainPageUrl(url: String): Try[Uri] =
-    Try (Uri(url)).map { u =>
+  def getMainPageUrl(url: String): Try[Uri] = {
+    val fixedUrl = if (!url.startsWith("http://") && !url.startsWith("https://")) {
+      defaultProtocol + "://" + url
+    } else {
+      url
+    }
+
+    Try(Uri(fixedUrl)).map { u =>
       val scheme = if (u.scheme.isEmpty) {
         defaultProtocol
       } else {
         u.scheme
       }
-      u.withScheme(scheme)
+      Uri.from(scheme = scheme).withAuthority(host = u.authority.host, port = u.authority.port)
     }
+  }
+
+  def transformPageName(pageName: Future[String], urls: Seq[String])(implicit ec: ExecutionContext): Future[Seq[UrlResponse]] =
+    pageName.transform {
+      case Success(name) =>
+        Success(urls.map { u =>
+          SuccessUrlResponse(u, name)
+        })
+      case Failure(ex) =>
+        Success(urls.map { u =>
+          FailedUrlResponse(u, ex.getMessage)
+        })
+    }
+
+  def requestContent(uri: Uri)(implicit as: ActorSystem, ec: ExecutionContext): Future[String] =
+    Http().singleRequest(HttpRequest(uri = uri)).flatMap { resp =>
+      if (resp.status.isSuccess()) {
+        getContentString(resp)
+      } else {
+        getContentString(resp).transform {
+          case Success(value) => Failure[String](FailedPageResponse(resp.status.intValue(), value))
+          case Failure(t) =>
+            val err = FailedPageResponse(resp.status.intValue(), "Could not parse error message: " + t.getMessage)
+            Failure[String](err)
+        }
+      }
+    }
+
+  def getNameFromHtml(html: String): Try[String] = Try {
+    Jsoup.parse(html).title()
+  }.flatMap { n =>
+    if (n.isEmpty) {
+      Failure(TitleNotFound)
+    } else {
+      Success(n)
+    }
+  }
 
   private def prepareFailedUrls(urls: Seq[String]): Seq[UrlResponse] =
     urls.map(u => FailedUrlResponse(u, "Could not extract main page url"))
@@ -71,38 +114,8 @@ class CrawlerServiceImpl(defaultProtocol: String) extends CrawlerService {
       }
     }
 
-  private def transformPageName(pageName: Future[String], urls: Seq[String])(implicit ec: ExecutionContext): Future[Seq[UrlResponse]] =
-    pageName.transform {
-      case Success(name) =>
-        Success(urls.map { u =>
-          SuccessUrlResponse(u, name)
-        })
-      case Failure(ex) =>
-        Success(urls.map { u =>
-          FailedUrlResponse(u, ex.getMessage)
-        })
-    }
-
-  private def requestContent(uri: Uri)(implicit as: ActorSystem, ec: ExecutionContext): Future[String] =
-    Http().singleRequest(HttpRequest(uri = uri)).flatMap { resp =>
-      if (resp.status.isSuccess()) {
-        getContentString(resp)
-      } else {
-        getContentString(resp).transform {
-          case Success(value) => Failure[String](FailedPageResponse(resp.status.intValue(), value))
-          case Failure(t) =>
-            val err = FailedPageResponse(resp.status.intValue(), "Could not parse error message: " + t.getMessage)
-            Failure[String](err)
-        }
-      }
-    }
-
   private def getContentString(resp: HttpResponse)(implicit ec: ExecutionContext, mat: Materializer): Future[String] =
     resp.entity.dataBytes.runFold(ByteString(""))(_ ++ _).map(_.utf8String)
-
-  private def getNameFromHtml(html: String): Try[String] = Try {
-    Jsoup.parse(html).title()
-  }
 
 }
 

@@ -11,7 +11,13 @@ object CrawlerDTO {
   case class FullResponse(urls: Seq[UrlResponse])
 
   sealed trait CrawlerError extends Throwable
-  case class FailedPageResponse(httpCode: Int, message: String) extends CrawlerError
+  case class FailedPageResponse(httpCode: Int, message: String) extends CrawlerError {
+    override def getMessage: String = message
+  }
+
+  object TitleNotFound extends CrawlerError {
+    override def getMessage: String = "Title not found"
+  }
 
 
 }
