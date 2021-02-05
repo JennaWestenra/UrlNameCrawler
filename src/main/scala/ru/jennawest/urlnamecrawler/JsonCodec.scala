@@ -5,8 +5,7 @@ import io.circe.{Codec, Decoder, Encoder}
 import io.circe.generic.auto._
 import io.circe.generic.semiauto._
 import io.circe.syntax._
-
-import ru.jennawest.urlnamecrawler.CrawlerDTO._
+import ru.jennawest.urlnamecrawler.domain.dtos._
 
 trait JsonCodec {
 
