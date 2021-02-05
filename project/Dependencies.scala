@@ -23,7 +23,7 @@ object Dependencies {
   val pureConfig     = "com.github.pureconfig" %% "pureconfig" % pureConfigVersion
   val typesafeConfig = "com.typesafe"          % "config"      % typesafeConfigVersion
 
-  val akka          = "com.typesafe.akka" %% "akka-actor"      % akkaVersion
+  val akkaActors    = "com.typesafe.akka" %% "akka-actor"      % akkaVersion
   val akkaStream    = "com.typesafe.akka" %% "akka-stream"     % akkaVersion
   val akkaHttp      = "com.typesafe.akka" %% "akka-http"       % akkaHttpVersion
   val jsoup         = "org.jsoup"         % "jsoup"            % jsoupVersion
@@ -31,11 +31,14 @@ object Dependencies {
   val circe         = "io.circe"          %% "circe-core"      % circeVersion
   val circeGeneric  = "io.circe"          %% "circe-generic"   % circeVersion
 
-  val tapirCore      = "com.softwaremill.sttp.tapir" %% "tapir-core"         % tapirVersion
-  val tapirDocs      = "com.softwaremill.sttp.tapir" %% "tapir-openapi-docs" % tapirVersion
-  val tapirJsonCirce = "com.softwaremill.sttp.tapir" %% "tapir-json-circe"   % tapirVersion
   val tapirAkkaHttpServer =
     ("com.softwaremill.sttp.tapir" %% "tapir-akka-http-server" % tapirVersion).exclude("com.typesafe.akka", "akka-stream_2.12")
+  val tapirAkkaHttpSwagger =
+    ("com.softwaremill.sttp.tapir" %% "tapir-swagger-ui-akka-http" % tapirVersion).exclude("com.typesafe.akka", "akka-stream_2.12")
+  val tapirCore       = "com.softwaremill.sttp.tapir" %% "tapir-core"               % tapirVersion
+  val tapirDocs       = "com.softwaremill.sttp.tapir" %% "tapir-openapi-docs"       % tapirVersion
+  val tapirJsonCirce  = "com.softwaremill.sttp.tapir" %% "tapir-json-circe"         % tapirVersion
+  val tapirYamlCirce  = "com.softwaremill.sttp.tapir" %% "tapir-openapi-circe-yaml" % tapirVersion
 
   val scalaLogging = "com.typesafe.scala-logging" %% "scala-logging"  % scalaLoggingVersion
   val logback      = "ch.qos.logback"             % "logback-classic" % logbackVersion
@@ -43,25 +46,20 @@ object Dependencies {
   val scalatest  = "org.scalatest"  %% "scalatest"  % scalatestVersion  % Test
   val scalacheck = "org.scalacheck" %% "scalacheck" % scalacheckVersion % Test
 
-  val dependencies =
+  val config = Seq(pureConfig, typesafeConfig)
+  val tapir  = Seq(tapirAkkaHttpServer, tapirAkkaHttpSwagger, tapirCore, tapirDocs, tapirJsonCirce, tapirYamlCirce)
+  val akka   = Seq(akkaActors, akkaStream, akkaHttp)
+
+  val dependencies: Seq[ModuleID] =
     Seq(
-      pureConfig,
-      typesafeConfig,
-      akka,
-      akkaStream,
-      akkaHttp,
       jsoup,
       akkaHttpCirce,
       circe,
       circeGeneric,
-      tapirCore,
-      tapirDocs,
-      tapirJsonCirce,
-      tapirAkkaHttpServer,
       scalaLogging,
       logback
-    )
+    ) ++ config ++ akka ++ tapir
 
-  val testDependencies = Seq(scalatest, scalacheck)
+  val testDependencies: Seq[ModuleID] = Seq(scalatest, scalacheck)
 
 }
